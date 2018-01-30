@@ -12,7 +12,7 @@
 
       soso-text-input {
         font-size: 15px;
-        margin: 25px 0;
+        margin: 10px 0;
         --soso-label-color: #2E7D32;
         --soso-label-size: 90%;
         --soso-valid-color: #2E7D32;
@@ -20,6 +20,10 @@
 
       #errorMessage {
         color: red;
+      }
+
+      #title {
+        font-size: 18px;
       }
     </style>
     <div class="container">
@@ -32,6 +36,8 @@
         <b>Important:</b>
         Do not use a webpage unless you own its content or have permission to use it for this purpose. Content other than games will
         be taken down without notice.</p>
+      <soso-text-input id="title" label="Title" placeholder="Title" on-input="_onInput"></soso-text-input>
+      <soso-text-input id="text" label="Text" placeholder="Text" on-input="_onInput"></soso-text-input>
       <soso-text-input id="input" label="Enter https hosted game URL" placeholder="Enter https hosted game URL" on-input="_onInput"></soso-text-input>
       <div id="errorMessage"></div>
     </div>
@@ -91,8 +97,8 @@
       get summary() {
         return {
           imageURL: null,
-          title: "Let's Play!",
-          text: null
+          title: this.$.title.value,
+          text: this.$.text.value
         };
       }
 
@@ -106,7 +112,7 @@
       }
 
       _onInput() {
-        let ready = /^https\:\/\/\S+$/.test(this.$.input.value.trim());
+        let ready = /^https\:\/\/\S+$/.test(this.$.input.value.trim() && this.$.title.value);
         const http = /^http:\/\//.test(this.$.input.value.trim());
         if (http) {
           this.$.errorMessage.innerText = "Invalid URL: Only secure webpages are supported (https://...).";
