@@ -112,7 +112,7 @@
       }
 
       _onInput() {
-        let ready = /^https\:\/\/\S+$/.test(this.$.input.value.trim() && this.$.title.value);
+        let ready = /^https\:\/\/\S+$/.test(this.$.input.value.trim()) && this.$.title.value;
         const http = /^http:\/\//.test(this.$.input.value.trim());
         if (http) {
           this.$.errorMessage.innerText = "Invalid URL: Only secure webpages are supported (https://...).";
