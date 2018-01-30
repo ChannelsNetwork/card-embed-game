@@ -1,0 +1,179 @@
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../soso-text-input/soso-text-input.html">
+
+<dom-module id="card-embed-game-composer">
+  <template>
+    <style>
+      .container {
+        max-width: 600px;
+        padding: 10px;
+        margin: 25px auto;
+      }
+
+      soso-text-input {
+        font-size: 15px;
+        margin: 25px 0;
+        --soso-label-color: #2E7D32;
+        --soso-label-size: 90%;
+        --soso-valid-color: #2E7D32;
+      }
+
+      #errorMessage {
+        color: red;
+      }
+    </style>
+    <div class="container">
+      <h2>Embed an HTML5 game</h2>
+      <p>This composes a card that is populated using an HTML5 game hosted at the URL you specify below.</p>
+      <p>The container for this page will fill the available screen space. Make sure the page is responsive to its size.
+      </p>
+      <p>Test that the page works well on all devices and browsers.</p>
+      <p>
+        <b>Important:</b>
+        Do not use a webpage unless you own its content or have permission to use it for this purpose. Content other than games will
+        be taken down without notice.</p>
+      <soso-text-input id="input" label="Enter https hosted game URL" placeholder="Enter https hosted game URL" on-input="_onInput"></soso-text-input>
+      <div id="errorMessage"></div>
+    </div>
+  </template>
+  <script>
+    class CardEmbedGameComposer extends Polymer.Element {
+      static get is() { return 'card-embed-game-composer'; }
+      static get properties() {
+        return {
+          services: Object,
+          initialState: Object,
+          author: Object
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        this._ready = false;
+        if (this.initialState && this.initialState.shared && this.initialState.shared.properties) {
+          let embedUrl = this.initialState.shared.properties.embedUrl;
+          if (embedUrl) {
+            this.$.input.value = embedUrl;
+            this._onInput();
+          }
+        }
+      }
+
+      get isReady() {
+        return this._ready;
+      }
+
+      prepare() {
+        return new Promise((resolve, reject) => {
+          if (!this._ready) {
+            throw new Error("Not ready");
+          }
+          if (!this.services.queryPage) {
+            resolve();
+            return;
+          }
+          this.$.errorMessage.innerText = "Testing...";
+          this.services.queryPage(this.$.input.value.trim()).then((response) => {
+            if (response.embeddable) {
+              this.$.errorMessage.innerText = "";
+              resolve();
+            } else {
+              this.$.errorMessage.innerText = response.notEmbeddableReason;
+              reject();
+            }
+          }).catch((err) => {
+            this.$.errorMessage.innerText = "Unable to use this URL";
+            reject();
+          });
+        });
+      }
+
+      get summary() {
+        return {
+          imageURL: null,
+          title: "Let's Play!",
+          text: null
+        };
+      }
+
+      get sharedState() {
+        return {
+          properties: {
+            embedUrl: this.$.input.value.trim()
+          },
+          collections: {}
+        }
+      }
+
+      _onInput() {
+        let ready = /^https\:\/\/\S+$/.test(this.$.input.value.trim());
+        const http = /^http:\/\//.test(this.$.input.value.trim());
+        if (http) {
+          this.$.errorMessage.innerText = "Invalid URL: Only secure webpages are supported (https://...).";
+          ready = false;
+        } else {
+          this.$.errorMessage.innerText = '';
+        }
+        if (this._ready !== ready) {
+          this._ready = ready;
+          this.dispatchEvent(new CustomEvent('state-ready-change', { bubbles: true, composed: true, detail: { ready: ready } }));
+        }
+      }
+    }
+    window.customElements.define(CardEmbedGameComposer.is, CardEmbedGameComposer);
+  </script>
+</dom-module>
+
+<dom-module id="card-embed-game-viewer">
+  <template>
+    <style>
+      :host {
+        display: block;
+        font-family: 'Open Sans', sans-serif;
+        font-weight: 400;
+        line-height: 1.5;
+        font-size: 18px;
+        color: #292929;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .container {
+        position: fixed;
+        top: 110px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      iframe {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        height: 100%;
+        background-color: white;
+      }
+    </style>
+    <div class="container">
+      <iframe src="[[sharedState.properties.embedUrl]]" scrolling="none" frameborder="0"></iframe>
+    </div>
+  </template>
+  <script>
+    class CardEmbedGameViewer extends Polymer.Element {
+      static get is() { return 'card-embed-game-viewer'; }
+      static get properties() {
+        return {
+          sharedState: Object,
+          author: Object,
+          user: Object
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+      }
+    }
+    window.customElements.define(CardEmbedGameViewer.is, CardEmbedGameViewer);
+  </script>
+</dom-module>
